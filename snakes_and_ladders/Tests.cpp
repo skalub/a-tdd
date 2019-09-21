@@ -17,6 +17,10 @@ struct Action {
     Type type;
     uint32_t target;
 };
+bool operator== (const Action& a1, const Action& a2)
+{
+    return  (a1.type == a2.type && a1.target == a2.target);
+}
 
 class Board {
 
@@ -41,26 +45,32 @@ class Board {
                     { 95, { Portal::Type::Snake, 75 } },
                     { 98, { Portal::Type::Snake, 78 } }
             };
-
+    static const uint32_t size = 100;
 public:
     auto landOn(u_int32_t square) -> Action  {
-        auto it = portals.find(square);
-        if (portals.end() == it) {
-            return Action{ Action::Type::MoveTo, square};
-        }
-        else {
-            return Action{ Action::Type::MoveTo, it->second.target};
-        }
+        uint32_t finalSquare = [square, this]{
+            auto it = portals.find (square);
+            if (portals.end() == it )
+                return square;
+            else
+                return it->second.target;
+        }();
+        if (finalSquare == size)
+            return Action {Action::Type::Win, square};
+        else
+            return Action { Action::Type::MoveTo, finalSquare};
     }
 };
 
 TEST_CASE("snakes & ladders") {
     Board board;
+    // Use assignment operatior on Action type
+    REQUIRE(board.landOn(1) == Action {Action::Type::MoveTo, 1});
     REQUIRE(board.landOn(1).target == 1);
     REQUIRE(board.landOn(3).target == 3);
     REQUIRE(board.landOn(2).target == 38);
     REQUIRE(board.landOn(47).target == 26);
-    //REQUIRE(board.landOn(100) == 100);
+    REQUIRE(board.landOn(100).type == Action::Type::Win);
 
 
 }
